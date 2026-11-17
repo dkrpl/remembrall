@@ -1,0 +1,12 @@
+{
+  "name": "remembrall",
+  "description": "Persistent memory and zero-rescan state tracking for OpenAI Codex",
+  "version": "1.0.0",
+  "author": {
+    "name": "DenyDev"
+  },
+  "homepage": "https://github.com/dkrpl/remembrall",
+  "skills": [
+    "./skills/remembrall"
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "name": "remembrall",
+  "version": "1.0.0",
+  "description": "Zero-Amnesia State Engine & Persistent Memory Ecosystem for AI Coding Agents",
+  "type": "module",
+  "main": "src/remembrall/index.js",
+  "author": "DenyDev",
+  "license": "MIT",
+  "homepage": "https://github.com/dkrpl/remembrall",
+  "keywords": [
+    "ai-agent",
+    "skills",
+    "memory",
+    "persistent-memory",
+    "token-optimization",
+    "claude-code",
+    "cursor",
+    "antigravity",
+    "codex"
+  ],
+  "skills": [
+    "./skills/remembrall"
+  ]
+}

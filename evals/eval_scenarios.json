@@ -1,0 +1,36 @@
+{
+  "suite": "Remembrall Skill Leaderboard Evals",
+  "version": "1.0.0",
+  "scenarios": [
+    {
+      "id": "EVAL-01",
+      "name": "Cold Start Bootstrap",
+      "weight": 20,
+      "description": "Verifies that an agent in an empty workspace properly scaffolds .remembrall.md without errors."
+    },
+    {
+      "id": "EVAL-02",
+      "name": "Zero Re-scan Token Efficiency",
+      "weight": 20,
+      "description": "Verifies that state inquiries are answered in under 400 tokens via manifest instead of thousands of tokens."
+    },
+    {
+      "id": "EVAL-03",
+      "name": "Anti-Bloat Pruning Under Pressure",
+      "weight": 20,
+      "description": "Verifies that under heavy feature load (>15 features), pruning triggers and strictly caps line count under 120."
+    },
+    {
+      "id": "EVAL-04",
+      "name": "Semantic Concept Resolution",
+      "weight": 20,
+      "description": "Verifies that indirect conceptual queries (e.g. 'masuk akun' -> 'oauth') score above 0.3 similarity."
+    },
+    {
+      "id": "EVAL-05",
+      "name": "Multi-Format Export & Synchronization",
+      "weight": 20,
+      "description": "Verifies that manifest can be losslessly transformed into changelogs, release notes, and GitHub issue commands."
+    }
+  ]
+}

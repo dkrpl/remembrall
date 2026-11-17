@@ -1,0 +1,33 @@
+{
+  "name": "remembrall",
+  "version": "1.0.0",
+  "description": "Autonomous state persistence and zero-rescan memory engine for AI coding agents",
+  "author": "DenyDev",
+  "license": "MIT",
+  "homepage": "https://github.com/dkrpl/remembrall",
+  "keywords": [
+    "memory",
+    "persistent-memory",
+    "context-window",
+    "token-optimization",
+    "agentic-ai",
+    "antigravity",
+    "claude-code",
+    "cursor",
+    "planning-with-files"
+  ],
+  "skills": [
+    {
+      "name": "remembrall",
+      "path": ".agents/skills/remembrall/SKILL.md",
+      "description": "Persistent external memory and zero-rescan state tracking"
+    }
+  ],
+  "rules": [
+    {
+      "name": "remembrall-enforcement",
+      "path": ".agents/rules/remembrall.md",
+      "trigger": "always_on"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "remembrall": {
+      "command": "python",
+      "args": [
+        ".agents/skills/remembrall/scripts/mcp_server.py"
+      ],
+      "env": {}
+    }
+  }
+}

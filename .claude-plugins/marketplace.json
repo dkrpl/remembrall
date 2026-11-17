@@ -1,0 +1,15 @@
+{
+  "name": "remembrall",
+  "version": "1.0.0",
+  "description": "World-Class Persistent Memory & Zero-Rescan State Engine for AI Coding Agents",
+  "homepage": "https://github.com/dkrpl/remembrall",
+  "author": "DenyDev",
+  "license": "MIT",
+  "plugins": [
+    {
+      "name": "remembrall",
+      "description": "Persistent memory and zero-rescan state tracking",
+      "path": "skills/remembrall/SKILL.md"
+    }
+  ]
+}

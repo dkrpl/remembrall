@@ -1,0 +1,14 @@
+{
+  "version": "1.0.0",
+  "hooks": [
+    {
+      "name": "remembrall-pre-tool-check",
+      "description": "Reminds agent to inspect .remembrall.md before running recursive search or directory traversal tools",
+      "events": ["pre_tool"],
+      "filter": {
+        "tools": ["run_command", "read_file"]
+      },
+      "action": "log"
+    }
+  ]
+}

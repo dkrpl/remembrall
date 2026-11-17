@@ -1,0 +1,6 @@
+{
+  "name": "remembrall",
+  "description": "Persistent memory and zero-rescan state tracking for AI coding agents",
+  "version": "1.0.0",
+  "contextFileName": "GEMINI.md"
+}

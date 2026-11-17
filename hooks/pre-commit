@@ -1,0 +1,19 @@
+#!/bin/sh
+# Remembrall Pre-Commit Hook
+# Validates manifest health, budget limits, and ensures state synchronization before commit.
+
+echo "🔮 Running Remembrall pre-commit health check..."
+
+if [ -f ".remembrall.md" ]; then
+    python .agents/skills/remembrall/scripts/remembrall.py validate
+    if [ $? -ne 0 ]; then
+        echo "❌ Commit rejected: .remembrall.md failed validation or exceeded 120-line budget."
+        echo "   Run 'python .agents/skills/remembrall/scripts/remembrall.py prune' to clean up."
+        exit 1
+    fi
+    echo "✅ Remembrall manifest verified."
+else
+    echo "⚠️ Warning: .remembrall.md not found in project root."
+fi
+
+exit 0
