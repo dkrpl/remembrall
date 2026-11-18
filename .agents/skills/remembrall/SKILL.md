@@ -107,15 +107,20 @@ When the user modifies code manually outside AI or requests a memory refresh:
 
 | Command | Purpose | Example |
 |---|---|---|
-| `ui` | Launch local dark-mode web dashboard | `python scripts/remembrall.py ui` |
-| `semantic` | Vector similarity & concept search | `python scripts/remembrall.py semantic "login session"` |
-| `query` | Weighted keyword search | `python scripts/remembrall.py query "auth"` |
-| `simulate` | Benchmark token and latency savings | `python scripts/remembrall.py simulate --turns 20` |
-| `export` | Generate changelog or release notes | `python scripts/remembrall.py export --format changelog` |
-| `status` | Print health check & token usage | `python scripts/remembrall.py status` |
-| `add` | Append a new feature row safely | `python scripts/remembrall.py add "Auth API" "src/auth.py"` |
-| `set` | Update status or notes by ID | `python scripts/remembrall.py set F-002 DONE` |
-| `prune` | Collapse older DONE rows to save tokens | `python scripts/remembrall.py prune --threshold 8` |
-| `validate` | Enforce line limits & table integrity | `python scripts/remembrall.py validate` |
-| `install-hooks`| Install git pre-commit hook | `python scripts/remembrall.py install-hooks` |
-| `init` | Scaffold new manifest from templates | `python scripts/remembrall.py init --template web` |
+| `ui` | Launch local dark-mode web dashboard | `remembrall ui` |
+| `capture` | Auto-capture Git commit as feature row | `remembrall capture` |
+| `align` | Socratic pre-flight invariant check (Jane Street style) | `remembrall align <FEATURE_ID>` |
+| `bridge` | Universal cross-agent memory sync | `remembrall bridge --target cursor` |
+| `diagram` | Render Mermaid flowchart or Gantt roadmap | `remembrall diagram --format flowchart` |
+| `sync` | Detect unrecorded code modifications & memory drift | `remembrall sync` |
+| `semantic` | Vector similarity & concept search | `remembrall semantic "login session"` |
+| `query` | Weighted keyword search | `remembrall query "auth"` |
+| `simulate` | Benchmark token and latency savings | `remembrall simulate --turns 20` |
+| `export` | Generate changelog or release notes | `remembrall export --format changelog` |
+| `status` | Print health check & token usage | `remembrall status` |
+| `add` | Append a new feature row safely | `remembrall add --id <ID> --name "<Feature>" --file "<File>"` |
+| `set` | Update status or notes by ID | `remembrall set <ID> DONE` |
+| `prune` | Collapse older DONE rows to L2 cold archive | `remembrall prune` |
+| `validate` | Enforce line limits & table integrity | `remembrall validate` |
+| `install-hooks`| Install git pre-commit hook | `remembrall install-hooks` |
+| `init` | Scaffold new manifest from templates | `remembrall init` |

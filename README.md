@@ -147,6 +147,11 @@ Empirical simulation benchmark across 20 conversation turns on a 15-feature code
 | Command | Equivalent MCP Tool | Description |
 |---|---|---|
 | `remembrall ui` | - | Launches local dark-mode interactive web dashboard on `:4242` |
+| `remembrall capture` | - | Auto-captures latest Git commit metadata into feature row |
+| `remembrall align <ID>` | - | Runs Socratic pre-flight invariant check (Jane Street style) |
+| `remembrall bridge --target <agent>`| - | Generates cross-agent memory bridge (`cursor`, `claude`, `codex`) |
+| `remembrall diagram` | - | Renders live Mermaid flowchart or Gantt roadmap diagram |
+| `remembrall sync` | - | Detects unrecorded modified files and memory drift |
 | `remembrall semantic "<term>"` | `remembrall_semantic_search` | TF-IDF cosine similarity & bilingual concept vector search |
 | `remembrall query "<term>"` | `remembrall_query` | Performs weighted keyword search across features & technical findings |
 | `remembrall simulate --turns <N>` | - | Runs empirical benchmark calculating exact token & latency savings |

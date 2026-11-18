@@ -331,3 +331,148 @@ export function startDashboard(manifestPath, port = 4242) {
 
   return server;
 }
+
+export function captureGit(manifestPath, options = {}) {
+  let commitMsg = "Git commit capture";
+  let changedFiles = [];
+  try {
+    commitMsg = child_process.execSync("git log -1 --pretty=%s", { encoding: "utf-8" }).trim();
+    const rawFiles = child_process.execSync("git diff-tree --no-commit-id --name-only -r HEAD", { encoding: "utf-8" });
+    changedFiles = rawFiles.split(/\r?\n/).map(f => f.trim()).filter(Boolean);
+  } catch {
+    // fallback if no git history yet
+  }
+
+  const { features } = parseManifest(fs.readFileSync(manifestPath, "utf-8"));
+  let nextId = options.id;
+  if (!nextId) {
+    let maxNum = 0;
+    for (const f of features) {
+      const m = f.id.match(/^F-(\d+)/);
+      if (m) maxNum = Math.max(maxNum, parseInt(m[1], 10));
+    }
+    nextId = `F-${String(maxNum + 1).padStart(3, "0")}`;
+  }
+
+  const title = options.name || commitMsg || "Captured Git Feature";
+  const files = options.files || changedFiles.slice(0, 3).join(", ") || "multiple";
+  const status = options.status || "DONE";
+  const note = options.note || `Auto-captured from git commit: ${commitMsg}`;
+
+  addFeature(manifestPath, nextId, title, files, note);
+  if (status !== "PLANNED") {
+    setFeature(manifestPath, nextId, status, note);
+  }
+
+  return { id: nextId, title, files, status, note };
+}
+
+export function generateMermaidDiagram(manifestPath, format = "flowchart") {
+  if (!fs.existsSync(manifestPath)) return "%% Manifest not found";
+  const { features } = parseManifest(fs.readFileSync(manifestPath, "utf-8"));
+
+  if (format === "gantt") {
+    const lines = [
+      "gantt",
+      "    title Remembrall State Engine Roadmap",
+      "    dateFormat YYYY-MM-DD",
+      "    axisFormat %m/%d",
+      "    section Completed Features"
+    ];
+    features.filter(f => f.status === "DONE").slice(-8).forEach((f, idx) => {
+      lines.push(`    ${f.id} ${f.name.replace(/[:#]/g, "")} :done, f${idx}, 2026-11-17, 1d`);
+    });
+    const wip = features.filter(f => f.status === "WIP");
+    if (wip.length > 0) {
+      lines.push("    section In Progress");
+      wip.forEach((f, idx) => {
+        lines.push(`    ${f.id} ${f.name.replace(/[:#]/g, "")} :active, w${idx}, after f0, 2d`);
+      });
+    }
+    return lines.join("\n");
+  }
+
+  // Default: Flowchart
+  const lines = [
+    "flowchart LR",
+    "    classDef done fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#ecfdf5;",
+    "    classDef wip fill:#78350f,stroke:#f59e0b,stroke-width:2px,color:#fffbeb;",
+    "    classDef planned fill:#1e293b,stroke:#64748b,stroke-width:2px,color:#f8fafc;"
+  ];
+
+  // Group into last 10 features for readable diagram
+  const recent = features.slice(-10);
+  for (let i = 0; i < recent.length; i++) {
+    const f = recent[i];
+    const safeName = f.name.replace(/["\(\)\[\]]/g, "");
+    const className = f.status.toLowerCase();
+    lines.push(`    ${f.id.replace(/-/g, "_")}["${f.id}: ${safeName}"]:::${className}`);
+    if (i > 0) {
+      const prev = recent[i - 1];
+      lines.push(`    ${prev.id.replace(/-/g, "_")} --> ${f.id.replace(/-/g, "_")}`);
+    }
+  }
+
+  return lines.join("\n");
+}
+
+export function socraticAlign(manifestPath, featureId) {
+  if (!fs.existsSync(manifestPath)) throw new Error("Manifest not found");
+  const { features, findings } = parseManifest(fs.readFileSync(manifestPath, "utf-8"));
+  const feature = features.find(f => f.id === featureId);
+  if (!feature) throw new Error(`Feature ${featureId} not found in manifest.`);
+
+  const invariantPrompts = findings.slice(0, 3).map((fd, i) => `${i + 1}. [${fd.title}]: Does your implementation strictly comply with: "${fd.content}"?`);
+
+  return [
+    `# 🧙‍♂️ Remembrall Socratic Pre-Flight Alignment (${feature.id})`,
+    `Feature Target: **${feature.name}** [Status: ${feature.status}]`,
+    `Files in Scope: \`${feature.files || "unspecified"}\``,
+    ``,
+    `## 🎯 Jane Street Diagnostic Alignment Questions:`,
+    ...invariantPrompts,
+    `${invariantPrompts.length + 1}. [Non-Goals]: What files or behaviors must explicitly NOT be touched?`,
+    `${invariantPrompts.length + 2}. [Verification Evidence]: What exact test command proves completion before setting DONE?`,
+    ``,
+    `💡 Rule: Verify all answers in chat context before transitioning status from PLANNED to WIP.`
+  ].join("\n");
+}
+
+export function generateBridge(manifestPath, targetAgent = "cursor") {
+  if (!fs.existsSync(manifestPath)) return "No active manifest found.";
+  const { lines, features, findings } = parseManifest(fs.readFileSync(manifestPath, "utf-8"));
+  const done = features.filter(f => f.status === "DONE").length;
+  const wip = features.filter(f => f.status === "WIP");
+
+  const stateSummary = `Active Features: ${features.length} (${done} Done, ${wip.length} WIP). Line budget: ${lines.length}/120.`;
+
+  switch (targetAgent.toLowerCase()) {
+    case "cursor":
+      return [
+        `# .cursorrules - Remembrall State Invariant`,
+        `# Always consult .remembrall.md before scanning workspace.`,
+        `Project State: ${stateSummary}`,
+        `Current WIP: ${wip.map(w => w.id + ": " + w.name).join(", ") || "None"}`,
+        `Mandatory Gate: Always run 'node bin/remembrall.js sync' before finishing turn.`
+      ].join("\n");
+
+    case "claude":
+      return [
+        `<remembrall_memory version="1.0">`,
+        `  <state budget="${lines.length}/120" completed="${done}" total="${features.length}"/>`,
+        `  <wip_tasks>${wip.map(w => `${w.id}: ${w.name}`).join("; ") || "none"}</wip_tasks>`,
+        `  <invariants>${findings.map(f => f.title).join(", ")}</invariants>`,
+        `  <instruction>Read .remembrall.md directly. Do not re-scan codebase.</instruction>`,
+        `</remembrall_memory>`
+      ].join("\n");
+
+    case "codex":
+    case "antigravity":
+    default:
+      return [
+        `# Universal Agent Context Brief (${targetAgent.toUpperCase()})`,
+        `State: ${stateSummary}`,
+        `Protocol: Inspect .remembrall.md at Turn 1. Update status before reporting DONE.`
+      ].join("\n");
+  }
+}

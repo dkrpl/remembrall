@@ -11,7 +11,11 @@ import {
   pruneManifest,
   generateHandoff,
   startDashboard,
-  checkDrift
+  checkDrift,
+  captureGit,
+  generateMermaidDiagram,
+  socraticAlign,
+  generateBridge
 } from "../src/remembrall/engine.js";
 
 const args = process.argv.slice(2);
@@ -35,6 +39,10 @@ Usage:
   remembrall set <ID> <STATUS>         Update feature status (DONE, WIP, PLANNED)
   remembrall query <TERMS>             Fast token-weighted search
   remembrall sync                      Detect untracked code changes & memory drift
+  remembrall capture                   Auto-capture latest Git commit as a feature
+  remembrall align <ID>                Socratic pre-flight alignment questionnaire
+  remembrall bridge [--target <agent>] Universal cross-agent memory sync
+  remembrall diagram [--format f|gantt]Generate visual Mermaid architecture diagram
   remembrall prune                     Consolidate older features if over budget
   remembrall handoff                   Generate markdown handoff brief for AI
   remembrall ui [--port 4242]          Launch local dark-mode web dashboard
@@ -147,6 +155,46 @@ async function main() {
         res.unrecorded.forEach(f => console.log(`   - ${f}`));
         console.log(`\n💡 Tip: Register them using 'remembrall add --id <ID> --name "<Feature>" --file "${res.unrecorded[0]}"'`);
       }
+      break;
+    }
+
+    case "capture": {
+      const idIdx = args.indexOf("--id");
+      const nameIdx = args.indexOf("--name");
+      const statusIdx = args.indexOf("--status");
+      const res = captureGit(manifestPath, {
+        id: idIdx !== -1 ? args[idIdx + 1] : undefined,
+        name: nameIdx !== -1 ? args[nameIdx + 1] : undefined,
+        status: statusIdx !== -1 ? args[statusIdx + 1].toUpperCase() : "DONE"
+      });
+      console.log(`✅ Captured Git feature [${res.id}]: ${res.title} (${res.status})`);
+      break;
+    }
+
+    case "align": {
+      const targetId = args[1];
+      if (!targetId) {
+        console.error("❌ Usage: remembrall align <FEATURE_ID>");
+        process.exit(1);
+      }
+      const questionnaire = socraticAlign(manifestPath, targetId);
+      console.log(questionnaire);
+      break;
+    }
+
+    case "bridge": {
+      const targetIdx = args.indexOf("--target");
+      const target = targetIdx !== -1 ? args[targetIdx + 1] : "cursor";
+      const brief = generateBridge(manifestPath, target);
+      console.log(brief);
+      break;
+    }
+
+    case "diagram": {
+      const formatIdx = args.indexOf("--format");
+      const format = formatIdx !== -1 ? args[formatIdx + 1] : "flowchart";
+      const diagram = generateMermaidDiagram(manifestPath, format);
+      console.log(diagram);
       break;
     }
 

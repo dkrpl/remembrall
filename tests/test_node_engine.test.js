@@ -10,7 +10,11 @@ import {
   setFeature,
   queryMemory,
   pruneManifest,
-  generateHandoff
+  generateHandoff,
+  generateMermaidDiagram,
+  socraticAlign,
+  generateBridge,
+  captureGit
 } from "../src/remembrall/engine.js";
 
 const SAMPLE_MANIFEST = `# Project Overview
@@ -127,6 +131,63 @@ test("pruneManifest creates L2 cold storage archive preserving history", () => {
   const archiveContent = fs.readFileSync(archiveFile, "utf-8");
   assert.match(archiveContent, /Remembrall Cold Storage Archive/);
   assert.match(archiveContent, /F-001/);
+
+  fs.rmSync(tmpDir, { recursive: true, force: true });
+});
+
+test("generateMermaidDiagram generates flowchart and gantt diagrams", () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "remembrall-test-"));
+  const tmpFile = path.join(tmpDir, ".remembrall.md");
+  fs.writeFileSync(tmpFile, SAMPLE_MANIFEST, "utf-8");
+
+  const flowchart = generateMermaidDiagram(tmpFile, "flowchart");
+  assert.match(flowchart, /flowchart LR/);
+  assert.match(flowchart, /F_001/);
+
+  const gantt = generateMermaidDiagram(tmpFile, "gantt");
+  assert.match(gantt, /gantt/);
+
+  fs.rmSync(tmpDir, { recursive: true, force: true });
+});
+
+test("socraticAlign produces diagnostic invariant questions", () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "remembrall-test-"));
+  const tmpFile = path.join(tmpDir, ".remembrall.md");
+  fs.writeFileSync(tmpFile, SAMPLE_MANIFEST, "utf-8");
+
+  const res = socraticAlign(tmpFile, "F-001");
+  assert.match(res, /Jane Street Diagnostic Alignment/);
+  assert.match(res, /Zero Re-scan/);
+  assert.match(res, /Non-Goals/);
+
+  fs.rmSync(tmpDir, { recursive: true, force: true });
+});
+
+test("generateBridge exports agent-specific configurations", () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "remembrall-test-"));
+  const tmpFile = path.join(tmpDir, ".remembrall.md");
+  fs.writeFileSync(tmpFile, SAMPLE_MANIFEST, "utf-8");
+
+  const cursor = generateBridge(tmpFile, "cursor");
+  assert.match(cursor, /.cursorrules/);
+
+  const claude = generateBridge(tmpFile, "claude");
+  assert.match(claude, /<remembrall_memory/);
+
+  fs.rmSync(tmpDir, { recursive: true, force: true });
+});
+
+test("captureGit captures git commit metadata into manifest", () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "remembrall-test-"));
+  const tmpFile = path.join(tmpDir, ".remembrall.md");
+  fs.writeFileSync(tmpFile, SAMPLE_MANIFEST, "utf-8");
+
+  const res = captureGit(tmpFile, { id: "F-099", name: "OAuth Auth", status: "DONE", files: "src/oauth.js" });
+  assert.equal(res.id, "F-099");
+  assert.equal(res.status, "DONE");
+
+  const parsed = parseManifest(fs.readFileSync(tmpFile, "utf-8"));
+  assert.equal(parsed.features.some(f => f.id === "F-099"), true);
 
   fs.rmSync(tmpDir, { recursive: true, force: true });
 });
