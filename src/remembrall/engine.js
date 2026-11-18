@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import http from "node:http";
+import child_process from "node:child_process";
 
 export const MAX_LINES = 120;
 export const PRUNE_TRIGGER_LINES = 100;
@@ -195,7 +196,17 @@ export function pruneManifest(manifestPath) {
   // Consolidate older half of DONE features
   const toConsolidate = doneFeatures.slice(0, Math.floor(doneFeatures.length / 2));
   const ids = toConsolidate.map(f => f.id);
-  const summaryRow = `| ${ids[0]}-${ids[ids.length - 1]} | Consolidated Module (${ids.length} features) | DONE | multiple | Historical features archived |`;
+  const summaryRow = `| ${ids[0]}-${ids[ids.length - 1]} | Consolidated Module (${ids.length} features) | DONE | multiple | Historical features archived in .remembrall.archive.md |`;
+
+  // Preserve in L2 Cold Archive (.remembrall.archive.md) so zero details are ever lost
+  const archivePath = path.join(path.dirname(manifestPath), ".remembrall.archive.md");
+  let archiveHeader = "";
+  if (!fs.existsSync(archivePath)) {
+    archiveHeader = `# 🗄️ Remembrall Cold Storage Archive\nPermanent historical archive of consolidated features.\n\n| ID | Fitur | Status | File Terkait | Catatan | Archived At |\n|---|---|---|---|---|---|\n`;
+  }
+  const timestamp = new Date().toISOString().split("T")[0];
+  const archiveRows = toConsolidate.map(f => `| ${f.id} | ${f.name} | ${f.status} | ${f.files} | ${f.note} | ${timestamp} |`).join("\n") + "\n";
+  fs.appendFileSync(archivePath, archiveHeader + archiveRows, "utf-8");
 
   const newLines = [];
   let insertedSummary = false;
@@ -243,6 +254,39 @@ export function generateHandoff(manifestPath) {
     `## 💡 Key Architectural Invariants`,
     findings.map(f => `- **${f.title}**: ${f.content}`).join("\n")
   ].join("\n");
+}
+
+export function checkDrift(manifestPath) {
+  if (!fs.existsSync(manifestPath)) return { inSync: false, message: "Manifest not found" };
+  const content = fs.readFileSync(manifestPath, "utf-8");
+  const { features } = parseManifest(content);
+
+  const manifestFiles = new Set();
+  for (const f of features) {
+    f.files.split(",").forEach(fl => {
+      const clean = fl.trim();
+      if (clean) manifestFiles.add(path.normalize(clean));
+    });
+  }
+
+  let gitFiles = [];
+  try {
+    const raw = child_process.execSync("git status --porcelain", { encoding: "utf-8" });
+    gitFiles = raw
+      .split(/\r?\n/)
+      .filter(line => line.length > 3)
+      .map(line => line.substring(3).trim())
+      .filter(f => f && !f.startsWith(".git") && !f.startsWith(".remembrall") && !f.endsWith(".md"));
+  } catch {
+    return { inSync: true, message: "Not a git repo or git unavailable" };
+  }
+
+  const unrecorded = gitFiles.filter(gf => !manifestFiles.has(path.normalize(gf)));
+  return {
+    inSync: unrecorded.length === 0,
+    unrecorded,
+    gitFilesCount: gitFiles.length
+  };
 }
 
 export function startDashboard(manifestPath, port = 4242) {

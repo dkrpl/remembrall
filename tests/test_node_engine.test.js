@@ -104,3 +104,29 @@ test("generateHandoff creates markdown brief", () => {
 
   fs.rmSync(tmpDir, { recursive: true, force: true });
 });
+
+test("pruneManifest creates L2 cold storage archive preserving history", () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "remembrall-test-"));
+  const tmpFile = path.join(tmpDir, ".remembrall.md");
+
+  let rows = "";
+  for (let i = 3; i <= 20; i++) {
+    rows += `| F-${String(i).padStart(3, "0")} | Feature ${i} | DONE | file${i}.js | Done note |\n`;
+  }
+  let bigManifest = SAMPLE_MANIFEST.replace("| F-002 | Billing | WIP | src/bill.js | Stripe integration |\n", `| F-002 | Billing | WIP | src/bill.js | Stripe integration |\n${rows}`);
+  for (let j = 0; j < 85; j++) {
+    bigManifest += `<!-- padding ${j} -->\n`;
+  }
+  fs.writeFileSync(tmpFile, bigManifest, "utf-8");
+
+  const res = pruneManifest(tmpFile);
+  assert.equal(res.pruned, true);
+
+  const archiveFile = path.join(tmpDir, ".remembrall.archive.md");
+  assert.equal(fs.existsSync(archiveFile), true);
+  const archiveContent = fs.readFileSync(archiveFile, "utf-8");
+  assert.match(archiveContent, /Remembrall Cold Storage Archive/);
+  assert.match(archiveContent, /F-001/);
+
+  fs.rmSync(tmpDir, { recursive: true, force: true });
+});

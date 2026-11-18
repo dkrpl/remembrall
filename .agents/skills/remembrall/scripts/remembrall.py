@@ -227,7 +227,18 @@ def prune_manifest(path, max_individual=8):
     if len(combined_files) > 3:
         files_summary += f" (+{len(combined_files) - 3} more)"
         
-    consolidated_row = f"| {range_id} | Consolidated Foundation Modules ({len(to_consolidate)} features) | DONE | {files_summary} | Stabilized historical features |"
+    consolidated_row = f"| {range_id} | Consolidated Foundation Modules ({len(to_consolidate)} features) | DONE | {files_summary} | Stabilized historical features archived in .remembrall.archive.md |"
+    
+    # Preserve pruned features into L2 Cold Storage Archive (.remembrall.archive.md)
+    archive_path = path.parent / ".remembrall.archive.md"
+    from datetime import datetime
+    today = datetime.now().strftime("%Y-%m-%d")
+    header = ""
+    if not archive_path.exists():
+        header = "# 🗄️ Remembrall Cold Storage Archive\nPermanent historical archive of consolidated features.\n\n| ID | Fitur | Status | File Terkait | Catatan | Archived At |\n|---|---|---|---|---|---|\n"
+    rows = "\n".join([f"| {f['id']} | {f['title']} | {f['status']} | {f['files']} | {f['notes']} | {today} |" for f in to_consolidate]) + "\n"
+    with open(archive_path, "a", encoding="utf-8") as af:
+        af.write(header + rows)
     
     # Filter out consolidated lines
     indices_to_remove = set(f["line_idx"] for f in to_consolidate)

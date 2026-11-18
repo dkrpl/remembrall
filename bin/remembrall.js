@@ -10,7 +10,8 @@ import {
   queryMemory,
   pruneManifest,
   generateHandoff,
-  startDashboard
+  startDashboard,
+  checkDrift
 } from "../src/remembrall/engine.js";
 
 const args = process.argv.slice(2);
@@ -33,6 +34,7 @@ Usage:
   remembrall add --id <ID> --name <N>  Add a new feature row
   remembrall set <ID> <STATUS>         Update feature status (DONE, WIP, PLANNED)
   remembrall query <TERMS>             Fast token-weighted search
+  remembrall sync                      Detect untracked code changes & memory drift
   remembrall prune                     Consolidate older features if over budget
   remembrall handoff                   Generate markdown handoff brief for AI
   remembrall ui [--port 4242]          Launch local dark-mode web dashboard
@@ -132,6 +134,18 @@ async function main() {
         results.features.forEach(f => {
           console.log(`   [${f.id}] (${f.status}) ${f.name} -> ${f.files} (Score: ${f.score})`);
         });
+      }
+      break;
+    }
+
+    case "sync": {
+      const res = checkDrift(manifestPath);
+      if (res.inSync) {
+        console.log(`✅ State synchronized: All modified files are recorded in ${manifestPath}.`);
+      } else {
+        console.log(`⚠️ Memory Drift Detected: The following modified files are NOT yet recorded in ${manifestPath}:`);
+        res.unrecorded.forEach(f => console.log(`   - ${f}`));
+        console.log(`\n💡 Tip: Register them using 'remembrall add --id <ID> --name "<Feature>" --file "${res.unrecorded[0]}"'`);
       }
       break;
     }

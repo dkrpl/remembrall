@@ -16,6 +16,11 @@ if [ -f ".remembrall.md" ]; then
         exit 1
     fi
     echo "✅ Remembrall manifest verified."
+
+    # Memory drift check
+    if command -v node >/dev/null 2>&1 && [ -f "bin/remembrall.js" ]; then
+        node bin/remembrall.js sync
+    fi
 else
     echo "⚠️ Warning: .remembrall.md not found in project root."
 fi
