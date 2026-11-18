@@ -4,7 +4,14 @@
   "description": "Zero-Amnesia State Engine & Persistent Memory Ecosystem for AI Coding Agents",
   "type": "module",
   "main": "src/remembrall/index.js",
-  "author": "DenyDev",
+  "bin": {
+    "remembrall": "./bin/remembrall.js"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "start": "node bin/remembrall.js ui"
+  },
+  "author": "dkrpl",
   "license": "MIT",
   "homepage": "https://github.com/dkrpl/remembrall",
   "keywords": [
@@ -16,7 +23,8 @@
     "claude-code",
     "cursor",
     "antigravity",
-    "codex"
+    "codex",
+    "mcp"
   ],
   "skills": [
     "./skills/remembrall"

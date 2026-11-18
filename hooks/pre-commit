@@ -5,10 +5,14 @@
 echo "🔮 Running Remembrall pre-commit health check..."
 
 if [ -f ".remembrall.md" ]; then
-    python .agents/skills/remembrall/scripts/remembrall.py validate
+    if command -v node >/dev/null 2>&1 && [ -f "bin/remembrall.js" ]; then
+        node bin/remembrall.js validate
+    else
+        python .agents/skills/remembrall/scripts/remembrall.py validate
+    fi
     if [ $? -ne 0 ]; then
         echo "❌ Commit rejected: .remembrall.md failed validation or exceeded 120-line budget."
-        echo "   Run 'python .agents/skills/remembrall/scripts/remembrall.py prune' to clean up."
+        echo "   Run 'remembrall prune' to consolidate historical features."
         exit 1
     fi
     echo "✅ Remembrall manifest verified."

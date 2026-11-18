@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Claude Code / Agent SessionStart Lifecycle Hook
+# Echoes the Remembrall state and zero-rescan protocol into agent context.
+
+if [ -f ".remembrall.md" ]; then
+    echo "🔮 [Remembrall Active]: Check .remembrall.md before scanning files. Keep state gate updated."
+fi

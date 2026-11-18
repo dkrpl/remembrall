@@ -26,6 +26,13 @@ if ($LASTEXITCODE -ne 0) {
     $allPassed = $false
 }
 
+Write-Output "`nRunning Node.js Unit Tests..."
+& node --test (Join-Path $repoRoot "tests/*.test.js")
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "Node.js unit test suite FAILED."
+    $allPassed = $false
+}
+
 Write-Output "`nTesting CLI Validation..."
 & python (Join-Path $repoRoot ".agents/skills/remembrall/scripts/remembrall.py") validate
 if ($LASTEXITCODE -ne 0) {

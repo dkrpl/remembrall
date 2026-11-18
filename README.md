@@ -81,19 +81,28 @@ npx skills add dkrpl/remembrall --skill remembrall -g
 
 ---
 
-### 5. Native Python CLI (Pip / Standalone)
+### 5. One-Line POSIX Shell Installer (Linux / macOS)
 ```bash
-git clone https://github.com/dkrpl/remembrall.git
-cd remembrall
+curl -fsSL https://raw.githubusercontent.com/dkrpl/remembrall/main/scripts/install.sh | bash
+```
+
+---
+
+### 6. Native Dual-Engine CLI (Node.js & Python)
+Remembrall is built with zero-dependency dual engines:
+
+**Node.js (Native Vanilla Engine):**
+```bash
+node bin/remembrall.js status
+node bin/remembrall.js ui --port 4242
+```
+
+**Python (Native Engine & MCP):**
+```bash
 pip install -e .
-
-# Launch local interactive web dashboard:
+remembrall status
 remembrall ui
-
-# Run bilingual concept vector search:
 remembrall semantic "login auth"
-
-# Run empirical simulation:
 remembrall simulate --turns 20
 ```
 
@@ -180,6 +189,13 @@ Yes. Remembrall is tested continuously across Ubuntu Linux, Windows, and macOS o
 
 ```
 .
+├── bin/
+│   └── remembrall.js                          # Native zero-dependency Node.js CLI executable
+├── scripts/
+│   ├── install.sh                             # One-line POSIX shell installer
+│   ├── setup-agent.sh                         # Multi-harness agent onboarding wizard
+│   └── start-dashboard.sh                     # Dashboard shell runner
+├── .gitattributes                             # GitHub Linguist language balance configuration
 ├── .remembrall.md                             # Physical active project state manifest
 ├── gemini-extension.json                      # Antigravity & Gemini CLI extension manifest
 ├── GEMINI.md                                  # Antigravity always-on memory instructions
@@ -201,7 +217,8 @@ Yes. Remembrall is tested continuously across Ubuntu Linux, Windows, and macOS o
 │   └── plugin.json
 ├── hooks/
 │   ├── pre-commit                             # Git pre-commit shell script
-│   └── pre-commit.ps1                         # Git pre-commit PowerShell script
+│   ├── pre-commit.ps1                         # Git pre-commit PowerShell script
+│   └── SessionStart                           # Claude Code session lifecycle hook
 ├── hooks.json                                 # Antigravity lifecycle event hooks
 ├── src/remembrall/                            # Python & Node package distribution
 │   ├── __init__.py

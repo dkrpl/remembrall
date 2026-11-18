@@ -20,6 +20,17 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Run Node.js Tests & CLI
+        run: |
+          node --test tests/*.test.js
+          node bin/remembrall.js validate
+          node bin/remembrall.js status
+
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
