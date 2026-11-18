@@ -46,9 +46,10 @@ jobs:
 
       - name: Test MCP Server Handshake
         run: |
-          python -c "import subprocess, json; p = subprocess.Popen(['python', '.agents/skills/remembrall/scripts/mcp_server.py'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True); out, _ = p.communicate(json.dumps({'jsonrpc': '2.0', 'id': 1, 'method': 'initialize'}) + '\n'); assert 'remembrall' in out, 'MCP Handshake Failed'"
+          python -c "import subprocess, json, sys; p = subprocess.Popen([sys.executable, '.agents/skills/remembrall/scripts/mcp_server.py'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True); out, _ = p.communicate(json.dumps({'jsonrpc': '2.0', 'id': 1, 'method': 'initialize'}) + '\n'); assert 'remembrall' in out, 'MCP Handshake Failed'"
 
       - name: Test Package Install & CLI Entrypoints
         run: |
-          pip install -e .
+          python -m pip install -e .
+          python -m src.remembrall.cli status
           remembrall status
