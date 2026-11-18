@@ -180,7 +180,7 @@ No. Remembrall is 100% local, self-contained, and requires zero third-party clou
 
 <details>
 <summary><b>4. Does Remembrall work on Windows, macOS, and Linux?</b></summary>
-Yes. Remembrall is tested continuously across Ubuntu Linux, Windows, and macOS on Python 3.9 through 3.12 via automated GitHub Actions CI.
+Yes. Remembrall is tested continuously across Ubuntu Linux, Windows, and macOS on Python 3.10 through 3.12 via automated GitHub Actions CI.
 </details>
 
 ---
