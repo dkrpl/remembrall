@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import fs from "node:fs";
 import path from "node:path";
+import child_process from "node:child_process";
 import {
   findManifest,
   validateManifest,
@@ -15,7 +16,13 @@ import {
   captureGit,
   generateMermaidDiagram,
   socraticAlign,
-  generateBridge
+  generateBridge,
+  semanticMerge,
+  mergeDriver,
+  repairManifest,
+  runGatekeeper,
+  discoverManifests,
+  initScopedManifest
 } from "../src/remembrall/engine.js";
 
 const args = process.argv.slice(2);
@@ -37,16 +44,22 @@ Usage:
   remembrall validate                  Validate manifest syntax and line budget
   remembrall add --id <ID> --name <N>  Add a new feature row
   remembrall set <ID> <STATUS>         Update feature status (DONE, WIP, PLANNED)
-  remembrall query <TERMS>             Fast token-weighted search
+  remembrall query <TERMS>             Unified two-tier search across L1 and L2
   remembrall sync                      Detect untracked code changes & memory drift
+  remembrall gatekeeper [--strict]     Enforce zero-drift and schema compliance
   remembrall capture                   Auto-capture latest Git commit as a feature
   remembrall align <ID>                Socratic pre-flight alignment questionnaire
   remembrall bridge [--target <agent>] Universal cross-agent memory sync
   remembrall diagram [--format f|gantt]Generate visual Mermaid architecture diagram
+  remembrall merge-driver %O %A %B %P  Semantic 3-way Git merge driver
+  remembrall install-merge-driver      Auto-configure Git merge driver for team branches
+  remembrall scopes                    Discover and aggregate monorepo sub-manifests
+  remembrall init-scope <DIR> [NAME]   Initialize scoped sub-module manifest
+  remembrall repair                    Auto-heal corrupted tables or broken headers
   remembrall prune                     Consolidate older features if over budget
   remembrall handoff                   Generate markdown handoff brief for AI
   remembrall ui [--port 4242]          Launch local dark-mode web dashboard
-  remembrall install-hooks             Install Git pre-commit verification hook
+  remembrall install-hooks             Install Git pre-commit & pre-push hooks
   `);
 }
 
@@ -140,7 +153,8 @@ async function main() {
         console.log("   (No matching features found)");
       } else {
         results.features.forEach(f => {
-          console.log(`   [${f.id}] (${f.status}) ${f.name} -> ${f.files} (Score: ${f.score})`);
+          const tierTag = f.tier === "L2_COLD_ARCHIVE" ? "[L2 Archive]" : "[L1 Active]";
+          console.log(`   ${tierTag} [${f.id}] (${f.status}) ${f.name} -> ${f.files} (Score: ${f.score})`);
         });
       }
       break;
@@ -218,6 +232,81 @@ async function main() {
       const portIdx = args.indexOf("--port");
       const port = portIdx !== -1 ? parseInt(args[portIdx + 1], 10) : 4242;
       startDashboard(manifestPath, port);
+      break;
+    }
+
+    case "merge-driver": {
+      const base = args[1];
+      const ours = args[2];
+      const theirs = args[3];
+      const target = args[4] || ours;
+      if (!base || !ours || !theirs) {
+        console.error("❌ Usage: remembrall merge-driver %O %A %B [%P]");
+        process.exit(1);
+      }
+      const code = mergeDriver(base, ours, theirs, target);
+      process.exit(code);
+      break;
+    }
+
+    case "install-merge-driver": {
+      try {
+        child_process.execSync('git config merge.remembrall.name "Remembrall 3-Way Semantic Merge Driver"', { stdio: "ignore" });
+        child_process.execSync('git config merge.remembrall.driver "node bin/remembrall.js merge-driver %O %A %B %P"', { stdio: "ignore" });
+        
+        const gitAttrPath = path.join(process.cwd(), ".gitattributes");
+        let gitAttr = fs.existsSync(gitAttrPath) ? fs.readFileSync(gitAttrPath, "utf-8") : "";
+        if (!gitAttr.includes("merge=remembrall")) {
+          gitAttr += "\n# Remembrall 3-way semantic merge driver\n.remembrall*.md merge=remembrall\n";
+          fs.writeFileSync(gitAttrPath, gitAttr, "utf-8");
+        }
+        console.log("✅ Remembrall 3-Way Semantic Merge Driver successfully installed for Git!");
+      } catch (err) {
+        console.error("❌ Failed to install merge driver:", err.message);
+        process.exit(1);
+      }
+      break;
+    }
+
+    case "gatekeeper": {
+      const strict = args.includes("--strict");
+      const res = runGatekeeper(manifestPath, { strict });
+      if (res.passed) {
+        console.log(`✅ Gatekeeper Passed: Manifest valid (${res.lineCount}/120 lines, ${res.featureCount} features, 0 drift).`);
+        process.exit(0);
+      } else {
+        console.error(`❌ Gatekeeper Failed:`);
+        res.errors.forEach(e => console.error(`   - ${e}`));
+        process.exit(1);
+      }
+      break;
+    }
+
+    case "repair": {
+      const res = repairManifest(manifestPath);
+      console.log(`✅ Auto-Repair Complete: Manifest restored (${res.lineCount} lines, ${res.featureCount} features).`);
+      break;
+    }
+
+    case "scopes":
+    case "monorepo": {
+      const manifests = discoverManifests(process.cwd());
+      console.log(`\n📦 Discovered Scoped Manifests (${manifests.length}):`);
+      manifests.forEach(m => {
+        console.log(`   - [${m.scope}] ${m.path} (${m.featureCount} features: ${m.doneCount} done, ${m.wipCount} wip, ${m.lineCount}/120 lines)`);
+      });
+      break;
+    }
+
+    case "init-scope": {
+      const targetDir = args[1];
+      const scopeName = args[2] || "";
+      if (!targetDir) {
+        console.error("❌ Usage: remembrall init-scope <DIR> [NAME]");
+        process.exit(1);
+      }
+      const p = initScopedManifest(path.resolve(targetDir), scopeName);
+      console.log(`✅ Scoped manifest initialized at: ${p}`);
       break;
     }
 

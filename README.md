@@ -171,6 +171,7 @@ When `remembrall prune` triggers at 100 lines:
 1. Older completed features collapse into single-row module summaries in active L1 memory.
 2. The original individual records, commit dates, and notes are appended to `.remembrall.archive.md`.
 3. Zero historical details are ever lost.
+4. The `remembrall query` command automatically searches both L1 Active and L2 Archive tiers simultaneously, tagging results with `[L1 Active]` or `[L2 Archive]`.
 
 ---
 
@@ -213,6 +214,12 @@ Empirical simulation benchmark across 20 conversation turns on a 15-feature code
 
 | Command | Equivalent MCP Tool | Description |
 |---|---|---|
+| `remembrall install-merge-driver` | - | Configures Git 3-way semantic merge driver to prevent table conflicts |
+| `remembrall merge-driver %O %A %B` | - | Resolves merge conflicts across team branches and parallel agents |
+| `remembrall gatekeeper [--strict]` | - | CI & pre-push gatekeeper enforcing zero memory drift and schema health |
+| `remembrall scopes` | - | Discovers and aggregates scoped manifests across monorepo packages |
+| `remembrall init-scope <DIR>` | - | Initializes a scoped sub-module manifest for monorepo microservices |
+| `remembrall repair` | - | Self-healing auto-repair for corrupted tables, missing pipes, or invalid statuses |
 | `remembrall ui` | - | Launches local dark-mode interactive web dashboard on `:4242` |
 | `remembrall capture` | - | Auto-captures latest Git commit metadata directly into feature row |
 | `remembrall align <ID>` | - | Runs Socratic pre-flight invariant verification (Jane Street style) |
@@ -220,7 +227,7 @@ Empirical simulation benchmark across 20 conversation turns on a 15-feature code
 | `remembrall diagram` | - | Renders live Mermaid flowchart or Gantt roadmap diagram |
 | `remembrall sync` | - | Detects unrecorded modified files and memory drift |
 | `remembrall semantic "<term>"` | `remembrall_semantic_search` | TF-IDF cosine similarity & bilingual concept vector search |
-| `remembrall query "<term>"` | `remembrall_query` | Performs weighted keyword search across features & technical findings |
+| `remembrall query "<term>"` | `remembrall_query` | Unified two-tier search across L1 active manifest and L2 cold archive |
 | `remembrall simulate --turns <N>` | - | Runs empirical benchmark calculating exact token & latency savings |
 | `remembrall export --format <fmt>` | - | Exports manifest as `changelog`, `github-issues`, `release-notes`, or `json` |
 | `remembrall status` | `remembrall_status` | Returns line count, token usage, health check, and feature stats |

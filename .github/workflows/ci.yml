@@ -34,6 +34,7 @@ jobs:
           node --test tests/*.test.js
           node bin/remembrall.js validate
           node bin/remembrall.js status
+          node bin/remembrall.js gatekeeper
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5

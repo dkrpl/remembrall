@@ -34,3 +34,8 @@ src/remembrall/__init__.py text eol=lf linguist-language=Python
 # Batchfile & PowerShell
 remembrall.cmd text eol=crlf linguist-language=Batchfile
 remembrall.ps1 text eol=crlf linguist-language=PowerShell
+
+# ----------------------------------------------------------------------
+# 3. Custom Git Merge Driver for Remembrall Memory
+# ----------------------------------------------------------------------
+.remembrall*.md merge=remembrall

@@ -148,10 +148,43 @@ export function setFeature(manifestPath, id, status, note = null) {
   return { success: true, id, status };
 }
 
+export function parseArchive(content) {
+  if (!content) return [];
+  const lines = content.split(/\r?\n/);
+  const features = [];
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith("|") && !trimmed.includes("| ID |") && !trimmed.includes("|---|")) {
+      const parts = line.split("|").map(p => p.trim());
+      if (parts.length >= 6) {
+        features.push({
+          id: parts[1],
+          name: parts[2],
+          status: parts[3],
+          files: parts[4],
+          note: parts[5],
+          archivedAt: parts[6] || ""
+        });
+      }
+    }
+  }
+  return features;
+}
+
 export function queryMemory(manifestPath, queryStr, limit = 5) {
   if (!fs.existsSync(manifestPath)) return { features: [], findings: [] };
   const content = fs.readFileSync(manifestPath, "utf-8");
   const { features, findings } = parseManifest(content);
+  const allFeatures = features.map(f => ({ ...f, tier: "L1_ACTIVE" }));
+
+  // Check L2 Cold Storage Archive
+  const archivePath = path.join(path.dirname(manifestPath), ".remembrall.archive.md");
+  if (fs.existsSync(archivePath)) {
+    const archiveContent = fs.readFileSync(archivePath, "utf-8");
+    const archivedFeatures = parseArchive(archiveContent).map(f => ({ ...f, tier: "L2_COLD_ARCHIVE" }));
+    allFeatures.push(...archivedFeatures);
+  }
+
   const terms = queryStr.toLowerCase().split(/\s+/).filter(Boolean);
 
   function score(text) {
@@ -163,7 +196,7 @@ export function queryMemory(manifestPath, queryStr, limit = 5) {
     return s;
   }
 
-  const scoredFeatures = features
+  const scoredFeatures = allFeatures
     .map(f => ({ ...f, score: score(`${f.id} ${f.name} ${f.files} ${f.note}`) }))
     .filter(f => f.score > 0)
     .sort((a, b) => b.score - a.score)
@@ -475,4 +508,289 @@ export function generateBridge(manifestPath, targetAgent = "cursor") {
         `Protocol: Inspect .remembrall.md at Turn 1. Update status before reporting DONE.`
       ].join("\n");
   }
+}
+
+export function semanticMerge(baseContent, oursContent, theirsContent) {
+  const base = parseManifest(baseContent || "");
+  const ours = parseManifest(oursContent || "");
+  const theirs = parseManifest(theirsContent || "");
+
+  function statusRank(st) {
+    if (st === "DONE") return 4;
+    if (st === "WIP") return 3;
+    if (st === "PLANNED") return 2;
+    if (st === "DEPRECATED") return 1;
+    return 0;
+  }
+
+  function mergeRow(a, b) {
+    if (!a) return b;
+    if (!b) return a;
+    
+    // Status precedence: highest rank wins
+    const status = statusRank(a.status) >= statusRank(b.status) ? a.status : b.status;
+    
+    // Merge files
+    const filesA = (a.files || "").split(",").map(f => f.trim()).filter(Boolean);
+    const filesB = (b.files || "").split(",").map(f => f.trim()).filter(Boolean);
+    const mergedFiles = Array.from(new Set([...filesA, ...filesB])).join(", ");
+
+    // Name: pick the most descriptive
+    const name = (a.name || "").length >= (b.name || "").length ? a.name : b.name;
+
+    // Note: join notes if different
+    let note = a.note || "";
+    if (b.note && b.note !== a.note) {
+      note = note ? `${note}; ${b.note}` : b.note;
+    }
+
+    return { id: a.id, name, status, files: mergedFiles, note };
+  }
+
+  const featureMap = new Map();
+  const oursMap = new Map(ours.features.map(f => [f.id, f]));
+  const theirsMap = new Map(theirs.features.map(f => [f.id, f]));
+
+  const allIds = new Set([...oursMap.keys(), ...theirsMap.keys()]);
+  for (const id of allIds) {
+    const o = oursMap.get(id);
+    const t = theirsMap.get(id);
+    featureMap.set(id, mergeRow(o, t));
+  }
+
+  // Merge Technical Findings
+  const findingsMap = new Map();
+  for (const fd of [...ours.findings, ...theirs.findings]) {
+    if (!findingsMap.has(fd.title)) {
+      findingsMap.set(fd.title, fd.content);
+    }
+  }
+
+  const sortedFeatures = Array.from(featureMap.values()).sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
+
+  const outLines = [
+    "# Project Overview",
+    "- **Project:** Unified State Engine",
+    "- **Core Stack:** Markdown, Antigravity Customization Architecture",
+    "",
+    "---",
+    "",
+    "## Feature Manifest",
+    "| ID | Fitur | Status | File Terkait | Catatan |",
+    "|---|---|---|---|---|"
+  ];
+
+  for (const f of sortedFeatures) {
+    outLines.push(`| ${f.id} | ${f.name} | ${f.status} | ${f.files} | ${f.note} |`);
+  }
+
+  outLines.push("", "---", "", "## Technical Findings");
+  for (const [title, content] of findingsMap.entries()) {
+    outLines.push(`- **${title}**: ${content}`);
+  }
+
+  return outLines.join("\n") + "\n";
+}
+
+export function mergeDriver(basePath, oursPath, theirsPath, targetPath = null) {
+  const baseContent = fs.existsSync(basePath) ? fs.readFileSync(basePath, "utf-8") : "";
+  const oursContent = fs.existsSync(oursPath) ? fs.readFileSync(oursPath, "utf-8") : "";
+  const theirsContent = fs.existsSync(theirsPath) ? fs.readFileSync(theirsPath, "utf-8") : "";
+
+  const merged = semanticMerge(baseContent, oursContent, theirsContent);
+  const outPath = targetPath || oursPath;
+  fs.writeFileSync(outPath, merged, "utf-8");
+  return 0;
+}
+
+export function repairManifest(manifestPath) {
+  if (!fs.existsSync(manifestPath)) {
+    throw new Error(`Manifest not found at ${manifestPath}`);
+  }
+  const content = fs.readFileSync(manifestPath, "utf-8");
+  const rawLines = content.split(/\r?\n/);
+
+  const features = [];
+  const findings = [];
+  let overviewLines = [];
+
+  function normalizeStatus(st) {
+    const upper = (st || "").toUpperCase().trim();
+    if (["DONE", "FINISHED", "COMPLETED", "RESOLVED", "PASSED"].includes(upper)) return "DONE";
+    if (["WIP", "PROGRESS", "IN_PROGRESS", "DOING", "ACTIVE"].includes(upper)) return "WIP";
+    if (["DEPRECATED", "OBSOLETE", "DROPPED"].includes(upper)) return "DEPRECATED";
+    return "PLANNED";
+  }
+
+  for (const line of rawLines) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith("|") && !trimmed.includes("| ID |") && !trimmed.includes("|---|")) {
+      const parts = line.split("|").map(p => p.trim());
+      if (parts.length >= 3) {
+        const id = parts[1] || `F-${String(features.length + 1).padStart(3, "0")}`;
+        const name = parts[2] || "Unspecified Feature";
+        const status = normalizeStatus(parts[3]);
+        const files = parts[4] || "";
+        const note = parts[5] || "";
+        features.push({ id, name, status, files, note });
+      }
+    } else if (trimmed.startsWith("- **") || trimmed.startsWith("* **")) {
+      const match = line.match(/[-*]\s*\*\*([^*:]+):?\*\*:?\s*(.*)/);
+      if (match) {
+        findings.push({ title: match[1].trim(), content: match[2].trim() });
+      }
+    } else if (trimmed.startsWith("- **Project:")) {
+      overviewLines.push(trimmed);
+    }
+  }
+
+  if (overviewLines.length === 0) {
+    overviewLines = [
+      "- **Project:** Remembrall & Skill Development",
+      "- **Core Stack:** Markdown, Node.js, Shell, Python",
+      "- **Purpose:** Persistent memory & zero-rescan state tracking"
+    ];
+  }
+
+  const repairedLines = [
+    "# Project Overview",
+    ...overviewLines,
+    "",
+    "---",
+    "",
+    "## Feature Manifest",
+    "| ID | Fitur | Status | File Terkait | Catatan |",
+    "|---|---|---|---|---|"
+  ];
+
+  for (const f of features) {
+    repairedLines.push(`| ${f.id} | ${f.name} | ${f.status} | ${f.files} | ${f.note} |`);
+  }
+
+  repairedLines.push("", "---", "", "## Technical Findings");
+  if (findings.length === 0) {
+    repairedLines.push("- **Zero Re-scan**: Always inspect .remembrall.md at Turn 1.");
+  } else {
+    for (const fd of findings) {
+      repairedLines.push(`- **${fd.title}**: ${fd.content}`);
+    }
+  }
+
+  const repairedContent = repairedLines.join("\n") + "\n";
+  fs.writeFileSync(manifestPath, repairedContent, "utf-8");
+  return { repaired: true, lineCount: repairedLines.length, featureCount: features.length };
+}
+
+export function runGatekeeper(manifestPath, options = {}) {
+  const errors = [];
+  if (!fs.existsSync(manifestPath)) {
+    return { passed: false, errors: [`Manifest not found at ${manifestPath}`] };
+  }
+
+  const content = fs.readFileSync(manifestPath, "utf-8");
+  const { lines, features } = parseManifest(content);
+
+  if (lines.length > MAX_LINES) {
+    errors.push(`Manifest exceeds ${MAX_LINES} lines (currently ${lines.length}). Run 'remembrall prune'.`);
+  }
+
+  if (!content.includes("# Project Overview")) errors.push("Missing '# Project Overview' header.");
+  if (!content.includes("## Feature Manifest")) errors.push("Missing '## Feature Manifest' table header.");
+  if (!content.includes("## Technical Findings")) errors.push("Missing '## Technical Findings' section.");
+
+  for (const f of features) {
+    if (!["DONE", "WIP", "PLANNED", "DEPRECATED"].includes(f.status)) {
+      errors.push(`Feature ${f.id} has invalid status '${f.status}'.`);
+    }
+  }
+
+  if (options.checkDrift !== false) {
+    const drift = checkDrift(manifestPath);
+    if (options.strict && drift.untrackedFiles && drift.untrackedFiles.length > 0) {
+      errors.push(`Memory drift detected: ${drift.untrackedFiles.length} modified code file(s) not in manifest: ${drift.untrackedFiles.slice(0, 3).join(", ")}`);
+    }
+  }
+
+  return {
+    passed: errors.length === 0,
+    errors,
+    lineCount: lines.length,
+    featureCount: features.length
+  };
+}
+
+export function discoverManifests(rootWorkspace = process.cwd()) {
+  const results = [];
+  const visited = new Set();
+
+  function scan(dir) {
+    if (visited.has(dir)) return;
+    visited.add(dir);
+
+    const baseName = path.basename(dir);
+    if (["node_modules", ".git", "dist", "build", ".gemini"].includes(baseName)) return;
+
+    const manifestCandidate = path.join(dir, ".remembrall.md");
+    if (fs.existsSync(manifestCandidate)) {
+      try {
+        const content = fs.readFileSync(manifestCandidate, "utf-8");
+        const { lines, features } = parseManifest(content);
+        const rel = path.relative(rootWorkspace, dir) || "root";
+        const done = features.filter(f => f.status === "DONE").length;
+        const wip = features.filter(f => f.status === "WIP").length;
+        results.push({
+          path: manifestCandidate,
+          scope: rel === "root" ? "root" : rel.replace(/\\/g, "/"),
+          lineCount: lines.length,
+          featureCount: features.length,
+          doneCount: done,
+          wipCount: wip
+        });
+      } catch {}
+    }
+
+    let entries = [];
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+
+    for (const ent of entries) {
+      if (ent.isDirectory()) {
+        scan(path.join(dir, ent.name));
+      }
+    }
+  }
+
+  scan(rootWorkspace);
+  return results;
+}
+
+export function initScopedManifest(targetDir, scopeName = "") {
+  fs.mkdirSync(targetDir, { recursive: true });
+  const manifestPath = path.join(targetDir, ".remembrall.md");
+  const name = scopeName || path.basename(targetDir);
+  const template = [
+    `# Project Overview`,
+    `- **Scope:** ${name}`,
+    `- **Workspace:** ${targetDir.replace(/\\/g, "/")}`,
+    `- **Status:** Active Sub-Module`,
+    ``,
+    `---`,
+    ``,
+    `## Feature Manifest`,
+    `| ID | Fitur | Status | File Terkait | Catatan |`,
+    `|---|---|---|---|---|`,
+    `| F-001 | ${name} Initial Setup | DONE | package.json | Scoped module scaffolding |`,
+    ``,
+    `---`,
+    ``,
+    `## Technical Findings`,
+    `- **Scoped Boundary**: This manifest manages features strictly within ${name}.`,
+    ``
+  ].join("\n");
+
+  fs.writeFileSync(manifestPath, template, "utf-8");
+  return manifestPath;
 }

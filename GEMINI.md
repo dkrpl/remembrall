@@ -3,6 +3,7 @@
 1. **Pre-flight Check (Zero Re-scan):**
    - At the beginning of any task or query regarding existing features, inspect `.remembrall.md` before performing broad workspace scans (`read_file .remembrall.md`).
    - If the requested feature or component is already documented, inspect only its listed files directly.
+   - If not found in the active manifest, query two-tier memory via `remembrall query <term>` or inspect `.remembrall.archive.md` before scanning the repo.
 
 2. **Post-flight Hard Gate (State Sync):**
    - Before reporting a task or feature as complete, update `.remembrall.md`:

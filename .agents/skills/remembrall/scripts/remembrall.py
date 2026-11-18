@@ -266,6 +266,27 @@ def query_memory(path, query_str, limit=5):
         
     content = path.read_text(encoding="utf-8")
     features = parse_features(path)
+    for fid, f in features.items():
+        f["tier"] = "L1_ACTIVE"
+
+    # Check L2 Cold Storage Archive
+    archive_path = path.parent / ".remembrall.archive.md"
+    if archive_path.exists():
+        for aline in archive_path.read_text(encoding="utf-8").splitlines():
+            astrip = aline.strip()
+            if astrip.startswith("|") and "| ID |" not in astrip and "|---|" not in astrip:
+                aparts = [p.strip() for p in astrip.split("|")]
+                if len(aparts) >= 6:
+                    afid = aparts[1]
+                    if afid not in features:
+                        features[afid] = {
+                            "id": afid,
+                            "title": aparts[2],
+                            "status": aparts[3],
+                            "files": aparts[4],
+                            "notes": aparts[5],
+                            "tier": "L2_COLD_ARCHIVE"
+                        }
     
     # Extract findings
     findings = []
@@ -314,6 +335,7 @@ def query_memory(path, query_str, limit=5):
                 "status": f["status"],
                 "files": f["files"],
                 "notes": f["notes"],
+                "tier": f.get("tier", "L1_ACTIVE"),
                 "score": score
             })
             
@@ -638,7 +660,8 @@ def main():
         if results["features"]:
             print("   Features Matching:")
             for f in results["features"]:
-                print(f"   - [{f['id']}] {f['title']} ({f['status']}) [Score: {f['score']}]")
+                tier_badge = "[L2 Archive]" if f.get("tier") == "L2_COLD_ARCHIVE" else "[L1 Active]"
+                print(f"   - {tier_badge} [{f['id']}] {f['title']} ({f['status']}) [Score: {f['score']}]")
                 print(f"     Files: {f['files']}")
                 if f["notes"]:
                     print(f"     Notes: {f['notes']}")
