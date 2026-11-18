@@ -246,6 +246,8 @@ export function generateHandoff(manifestPath) {
 }
 
 export function startDashboard(manifestPath, port = 4242) {
+  const htmlFile = path.join(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Z]:)/, "$1")), "dashboard.html");
+
   const server = http.createServer((req, res) => {
     if (req.url === "/api/status") {
       const content = fs.existsSync(manifestPath) ? fs.readFileSync(manifestPath, "utf-8") : "";
@@ -256,54 +258,24 @@ export function startDashboard(manifestPath, port = 4242) {
     }
 
     const content = fs.existsSync(manifestPath) ? fs.readFileSync(manifestPath, "utf-8") : "";
-    const { features, findings } = parseManifest(content);
+    const { features } = parseManifest(content);
     const doneCount = features.filter(f => f.status === "DONE").length;
 
-    const html = `<!DOCTYPE html>
-<html lang="en" class="dark">
-<head>
-  <meta charset="UTF-8"><title>Remembrall Dashboard (Node)</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-slate-950 text-slate-100 min-h-screen p-8 font-sans">
-  <div class="max-w-6xl mx-auto space-y-6">
-    <div class="flex items-center justify-between border-b border-slate-800 pb-4">
-      <div>
-        <h1 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-indigo-400">🔮 Remembrall State Engine</h1>
-        <p class="text-xs text-slate-400 mt-1">Universal Zero-Amnesia Memory (Node.js Native)</p>
-      </div>
-      <div class="flex gap-4">
-        <div class="px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-center">
-          <div class="text-2xl font-bold text-cyan-400">${features.length}</div>
-          <div class="text-[10px] text-slate-400 uppercase tracking-wider">Features</div>
-        </div>
-        <div class="px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-center">
-          <div class="text-2xl font-bold text-emerald-400">${doneCount}</div>
-          <div class="text-[10px] text-slate-400 uppercase tracking-wider">Completed</div>
-        </div>
-      </div>
-    </div>
-    <div class="bg-slate-900/60 rounded-2xl border border-slate-800 overflow-hidden">
-      <table class="w-full text-left text-sm">
-        <thead class="bg-slate-950/60 text-slate-400 border-b border-slate-800 uppercase text-xs">
-          <tr><th class="p-4">ID</th><th class="p-4">Feature</th><th class="p-4">Status</th><th class="p-4">Files</th><th class="p-4">Notes</th></tr>
-        </thead>
-        <tbody class="divide-y divide-slate-800/60">
-          ${features.map(f => `
-            <tr class="hover:bg-slate-800/30">
-              <td class="p-4 font-mono font-bold text-cyan-400">${f.id}</td>
-              <td class="p-4 font-medium">${f.name}</td>
-              <td class="p-4"><span class="px-2.5 py-0.5 rounded-full text-xs font-semibold ${f.status === "DONE" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : f.status === "WIP" ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" : "bg-slate-800 text-slate-400"}">${f.status}</span></td>
-              <td class="p-4 font-mono text-xs text-slate-400">${f.files}</td>
-              <td class="p-4 text-xs text-slate-400">${f.note}</td>
-            </tr>
-          `).join("")}
-        </tbody>
-      </table>
-    </div>
-  </div>
-</body>
-</html>`;
+    let html = fs.existsSync(htmlFile) ? fs.readFileSync(htmlFile, "utf-8") : "<h1>Remembrall</h1>";
+    html = html.replace('id="stat-total" class="text-2xl font-bold text-cyan-400">0</div>', `id="stat-total" class="text-2xl font-bold text-cyan-400">${features.length}</div>`);
+    html = html.replace('id="stat-done" class="text-2xl font-bold text-emerald-400">0</div>', `id="stat-done" class="text-2xl font-bold text-emerald-400">${doneCount}</div>`);
+    
+    const rows = features.map(f => `
+      <tr class="hover:bg-slate-800/30">
+        <td class="p-4 font-mono font-bold text-cyan-400">${f.id}</td>
+        <td class="p-4 font-medium">${f.name}</td>
+        <td class="p-4"><span class="px-2.5 py-0.5 rounded-full text-xs font-semibold ${f.status === "DONE" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : f.status === "WIP" ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" : "bg-slate-800 text-slate-400"}">${f.status}</span></td>
+        <td class="p-4 font-mono text-xs text-slate-400">${f.files}</td>
+        <td class="p-4 text-xs text-slate-400">${f.note}</td>
+      </tr>
+    `).join("");
+
+    html = html.replace('<tbody id="features-table" class="divide-y divide-slate-800/60">', `<tbody id="features-table" class="divide-y divide-slate-800/60">${rows}`);
 
     res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
     res.end(html);

@@ -1,3 +1,34 @@
-#!/usr/bin/env sh
-DIR="$(cd "$(dirname "$0")" && pwd)"
-exec python "$DIR/.agents/skills/remembrall/scripts/remembrall.py" "$@"
+#!/usr/bin/env bash
+# Remembrall Universal CLI POSIX Dispatcher
+# Cross-platform runner compatible with Linux, macOS, and Git Bash.
+
+set -e
+
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Detect runtime priority: Node.js (fastest) -> Python3 -> Python
+HAS_NODE=false
+HAS_PYTHON=false
+PY_BIN=""
+
+if command -v node >/dev/null 2>&1 && [ -f "$DIR/bin/remembrall.js" ]; then
+    HAS_NODE=true
+fi
+
+if command -v python3 >/dev/null 2>&1; then
+    HAS_PYTHON=true
+    PY_BIN="python3"
+elif command -v python >/dev/null 2>&1; then
+    HAS_PYTHON=true
+    PY_BIN="python"
+fi
+
+if [ "$HAS_NODE" = true ]; then
+    exec node "$DIR/bin/remembrall.js" "$@"
+elif [ "$HAS_PYTHON" = true ]; then
+    exec "$PY_BIN" "$DIR/.agents/skills/remembrall/scripts/remembrall.py" "$@"
+else
+    echo "❌ Error: Neither Node.js (>= 18) nor Python (>= 3.9) was found on your PATH." >&2
+    echo "   Please install Node.js or Python to run Remembrall." >&2
+    exit 1
+fi

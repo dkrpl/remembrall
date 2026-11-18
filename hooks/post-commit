@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Remembrall Post-Commit Hook
+# Validates that state manifest remains in budget after commit.
+
+if [ -f ".remembrall.md" ]; then
+    LINES=$(wc -l < .remembrall.md)
+    if [ "$LINES" -ge 100 ]; then
+        echo "⚠️ [Remembrall Notice]: Manifest is at $LINES lines (approaching 120-line ceiling)."
+        echo "   Consider running 'remembrall prune' to consolidate older features."
+    fi
+fi

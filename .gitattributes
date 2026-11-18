@@ -1,12 +1,36 @@
 # Auto detect text files and perform LF normalization
 * text=auto eol=lf
 
-# GitHub Linguist Language Configuration
-*.sh text eol=lf linguist-language=Shell
-hooks/pre-commit text eol=lf linguist-language=Shell
-hooks/SessionStart text eol=lf linguist-language=Shell
+# ----------------------------------------------------------------------
+# 1. Vendor/Ignore Test Fixtures, Benchmarks, and Internal Python Helpers
+# (Excludes heavy testing/backend files from skewing GitHub's language bar)
+# ----------------------------------------------------------------------
+tests/** linguist-vendored
+evals/** linguist-vendored
+docs/** linguist-documentation
+.agents/** linguist-vendored
+src/remembrall/cli.py linguist-vendored
+src/remembrall/mcp.py linguist-vendored
+
+# ----------------------------------------------------------------------
+# 2. Primary Languages: Shell (Dominant) & JavaScript (Superpowers Standard)
+# ----------------------------------------------------------------------
+# Shell Scripts (Primary Skill Harness & Hooks)
+remembrall text eol=lf linguist-language=Shell
+scripts/** text eol=lf linguist-language=Shell
+hooks/** text eol=lf linguist-language=Shell
+skills/**/scripts/**.sh text eol=lf linguist-language=Shell
+
+# JavaScript & TypeScript (Native Node.js CLI & State Engine)
 bin/remembrall.js text eol=lf linguist-language=JavaScript
-src/remembrall/*.js text eol=lf linguist-language=JavaScript
-*.ps1 text eol=crlf linguist-language=PowerShell
-*.cmd text eol=crlf linguist-language=Batchfile
-*.py text eol=lf linguist-language=Python
+src/remembrall/engine.js text eol=lf linguist-language=JavaScript
+src/remembrall/index.js text eol=lf linguist-language=JavaScript
+src/remembrall/index.d.ts text eol=lf linguist-language=TypeScript
+src/remembrall/dashboard.html text eol=lf linguist-language=HTML
+
+# Python (Clean package descriptor - keeping ~3-5% like superpowers)
+src/remembrall/__init__.py text eol=lf linguist-language=Python
+
+# Batchfile & PowerShell
+remembrall.cmd text eol=crlf linguist-language=Batchfile
+remembrall.ps1 text eol=crlf linguist-language=PowerShell
