@@ -2,6 +2,14 @@ import sys
 from pathlib import Path
 import importlib.util
 
+# Ensure UTF-8 output across all operating systems and Windows console (cp1252)
+if sys.stdout and hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 def main():
     try:
         from remembrall import core

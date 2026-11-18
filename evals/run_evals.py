@@ -10,6 +10,14 @@ import sys
 import tempfile
 from pathlib import Path
 
+# Ensure UTF-8 output across all operating systems and Windows console (cp1252)
+if sys.stdout and hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 # Add scripts directory
 SCRIPT_DIR = Path(__file__).parent.parent / ".agents" / "skills" / "remembrall" / "scripts"
 if str(SCRIPT_DIR) not in sys.path:
