@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 220" width="100%" height="100%">
+  <defs>
+    <radialGradient id="hCoreGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#6ee7b7" stop-opacity="0.95"/>
+      <stop offset="40%" stop-color="#10b981" stop-opacity="0.8"/>
+      <stop offset="80%" stop-color="#06b6d4" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/>
+    </radialGradient>
+
+    <linearGradient id="hRingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34d399" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#818cf8" stop-opacity="0.7"/>
+    </linearGradient>
+
+    <linearGradient id="hGlassBody" x1="30%" y1="15%" x2="70%" y2="85%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.25"/>
+      <stop offset="50%" stop-color="#059669" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#1e1b4b" stop-opacity="0.4"/>
+    </linearGradient>
+
+    <linearGradient id="textGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="60%" stop-color="#f8fafc"/>
+      <stop offset="100%" stop-color="#cbd5e1"/>
+    </linearGradient>
+
+    <filter id="hGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="12" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Background Canvas -->
+  <rect width="840" height="220" rx="32" fill="#070c14"/>
+  <rect width="836" height="216" x="2" y="2" rx="30" fill="none" stroke="#1e293b" stroke-width="1.5" stroke-opacity="0.7"/>
+
+  <!-- Left: The Iconic Memory Orb Mark -->
+  <g transform="translate(30, 20)">
+    <!-- Squircle icon container -->
+    <rect width="180" height="180" rx="42" fill="#0d1522" stroke="#1e293b" stroke-width="1.5"/>
+
+    <!-- Ambient Glow -->
+    <circle cx="90" cy="90" r="48" fill="url(#hCoreGlow)" filter="url(#hGlow)"/>
+
+    <!-- Orbital Ring -->
+    <ellipse cx="90" cy="90" rx="60" ry="24" fill="none" stroke="url(#hRingGrad)" stroke-width="2" transform="rotate(-26 90 90)"/>
+
+    <!-- Glass Orb -->
+    <circle cx="90" cy="90" r="44" fill="url(#hGlassBody)" stroke="#6ee7b7" stroke-width="1.8" stroke-opacity="0.5"/>
+
+    <!-- Neural Center -->
+    <circle cx="90" cy="90" r="4.5" fill="#ffffff" filter="url(#hGlow)"/>
+    <circle cx="82" cy="78" r="3" fill="#6ee7b7"/>
+    <circle cx="100" cy="84" r="3" fill="#38bdf8"/>
+    <circle cx="90" cy="102" r="3.5" fill="#a7f3d0"/>
+    <path d="M82 78 L100 84 L90 102 Z" fill="none" stroke="#34d399" stroke-width="1.2" stroke-opacity="0.6"/>
+
+    <!-- Highlight Reflection -->
+    <ellipse cx="74" cy="66" rx="18" ry="9" fill="#ffffff" fill-opacity="0.5" transform="rotate(-30 74 66)"/>
+  </g>
+
+  <!-- Right: Typography & Brand Hierarchy -->
+  <g transform="translate(245, 0)">
+    <!-- Brand Name -->
+    <text x="0" y="112" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="54" font-weight="800" letter-spacing="4" fill="url(#textGrad)">REMEMBRALL</text>
+
+    <!-- Category Pill Badge -->
+    <g transform="translate(425, 78)">
+      <rect width="90" height="24" rx="12" fill="#064e3b" stroke="#10b981" stroke-width="1"/>
+      <text x="45" y="16" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="11" font-weight="700" letter-spacing="1.5" fill="#6ee7b7" text-anchor="middle">v1.0.0</text>
+    </g>
+
+    <!-- Subtitle / Positioning -->
+    <text x="2" y="146" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="15" font-weight="600" letter-spacing="2.5" fill="#10b981">ZERO-AMNESIA STATE ENGINE</text>
+
+    <!-- Technology Tags -->
+    <text x="2" y="174" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="500" letter-spacing="1" fill="#64748b">PERSISTENT MEMORY • 83% TOKEN REDUCTION • MULTI-AGENT COMPATIBLE</text>
+  </g>
+</svg>
